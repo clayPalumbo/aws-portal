@@ -9,7 +9,7 @@ export class AwsPortalStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const COLLECTION_ID = "DEMO_RESOURCE";
+    const WEATHER_KEY = process.env.WEATHER_KEY;
     const weatherResourceRole = new iam.Role(
       this,
       "weatherCustomResourceRole",
@@ -30,7 +30,7 @@ export class AwsPortalStack extends Stack {
       handler: "weather-resource.handler",
       code: lambda.Code.fromAsset(path.resolve(__dirname, "functions")),
       environment: {
-        COLLECTION_ID,
+        WEATHER_KEY,
       },
     });
 

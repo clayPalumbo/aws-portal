@@ -1,6 +1,6 @@
-# Welcome to your CDK TypeScript project
+# Welcome to my overly engineered Dashboard BE (in progress)
 
-This is a blank project for CDK development with TypeScript.
+In progress.
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 

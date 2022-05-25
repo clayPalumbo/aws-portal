@@ -2,14 +2,14 @@ import fetch from "node-fetch";
 import { WeatherResponse } from "../../models/weather.model";
 
 export class WeatherService {
-  data: any;
   constructor() {}
 
   public getWeather = async (): Promise<WeatherResponse> => {
-    this.data = await fetch(
-      "http://api.weatherapi.com/v1/forecast.json?key=4372bc2acb21401d89e203657222405&q=28031&days=1&aqi=no&alerts=no"
+    const response = await fetch(
+      `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_KEY}&q=28031&days=1&aqi=no&alerts=no`
     );
-    return this.weatherMapper(this.data);
+    const data = await response.json();
+    return this.weatherMapper(data);
   };
 
   private weatherMapper = (data: any): WeatherResponse => {
