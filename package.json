@@ -1,5 +1,5 @@
 {
-  "name": "aws-portal",
+  "name": "dashboard-backend",
   "version": "0.1.0",
   "bin": {
     "aws-portal": "bin/aws-portal.js"
