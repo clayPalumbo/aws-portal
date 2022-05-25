@@ -1,5 +1,5 @@
 import * as logs from "@aws-cdk/aws-logs";
-import { CustomResource, Stack, Construct, StackProps } from "@aws-cdk/core";
+import { CustomResource, Stack, StackProps, Construct } from "@aws-cdk/core";
 import * as cr from "@aws-cdk/custom-resources";
 import * as lambda from "@aws-cdk/aws-lambda";
 import * as iam from "@aws-cdk/aws-iam";
@@ -25,7 +25,7 @@ export class AwsPortalStack extends Stack {
       })
     );
 
-    const onEvent = new lambda.Function(this, "weatherCustomResourceFunction", {
+    const onEvent = new lambda.Function(this, "weather", {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: "weather-resource.handler",
       code: lambda.Code.fromAsset(path.resolve(__dirname, "functions")),
