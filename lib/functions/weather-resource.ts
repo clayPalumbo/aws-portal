@@ -3,7 +3,7 @@ import { WeatherService } from "./services/weather.service";
 
 export const handler = async (event: any): Promise<WeatherResponse> => {
   console.log("Weather lambda", event);
-  const weatherService = new WeatherService();
+  const weatherService = new WeatherService(event);
 
   try {
     return await weatherService.getWeather();

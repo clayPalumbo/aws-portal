@@ -1,29 +1,61 @@
 import fetch from "node-fetch";
-import { WeatherResponse } from "../../models/weather.model";
+import { Forecast, WeatherResponse } from "../../models/weather.model";
 
 export class WeatherService {
-  constructor() {}
+  event: any;
+
+  constructor(event: any) {
+    this.event = event;
+  }
 
   public getWeather = async (): Promise<WeatherResponse> => {
-    const response = await fetch(
-      `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_KEY}&q=28031&days=1&aqi=no&alerts=no`
-    );
-    const data = await response.json();
-    return this.weatherMapper(data);
+    try {
+      const response = await fetch(
+        `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_KEY}&q=${this.event}&days=1&aqi=no&alerts=no`
+      );
+      const data = await response.json();
+      return this.weatherMapper(data);
+    } catch (error) {
+      throw new Error("Failed to get weather: " + error);
+    }
   };
 
-  private weatherMapper = (data: any): WeatherResponse => {
-    // extract needed forecast data before returning it.
-    const current = data.current;
-    const icon = current.condition.icon.slice(2);
+  private weatherMapper = (weather: any): WeatherResponse => {
+    const current = weather.current;
+    const icon = current?.condition.icon.slice(2);
+    const localTime = new Date(weather.localtime).getHours();
+    const refinedForecast = this.getRefinedForecast(
+      weather.forecast.forecastday[0],
+      localTime
+    );
     return {
-      location: data.location.name,
       condition: current.condition.text,
+      location: weather.location.name,
+      feelsLike: current.feelslike_f,
+      forecast: refinedForecast,
       wind: current.wind_mph,
       temp: current.temp_f,
-      feelsLike: current.feelslike_f,
       icon: icon,
-      forecast: data.forecast,
+    };
+  };
+
+  private getRefinedForecast = (forecast: any, localTime: number): Forecast => {
+    const closeHours = forecast.hour.slice(localTime, localTime + 6);
+    const day = forecast.day;
+
+    const refinedForecast = closeHours.map((hour: any) => {
+      return {
+        condition: hour.condition.icon.slice(2),
+        chanceOfRain: hour.chance_of_rain,
+        temp: hour.temp_f,
+        wind: hour.wind,
+      };
+    });
+
+    return {
+      nextFewHours: refinedForecast,
+      high: day.maxtemp_f,
+      low: day.mintemp_f,
     };
   };
 }

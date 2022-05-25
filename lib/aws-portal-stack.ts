@@ -1,5 +1,6 @@
 import * as logs from "@aws-cdk/aws-logs";
 import { CustomResource, Stack, StackProps, Construct } from "@aws-cdk/core";
+import "dotenv/config";
 import * as cr from "@aws-cdk/custom-resources";
 import * as lambda from "@aws-cdk/aws-lambda";
 import * as iam from "@aws-cdk/aws-iam";
@@ -28,13 +29,13 @@ export class AwsPortalStack extends Stack {
     const onEvent = new lambda.Function(this, "weather", {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: "weather-resource.handler",
-      code: lambda.Code.fromAsset(path.resolve(__dirname, "functions")),
+      code: lambda.Code.fromAsset(path.resolve("js/lib/functions")),
       environment: {
-        WEATHER_KEY,
+        WEATHER_KEY: WEATHER_KEY as string,
       },
     });
 
-    const weatherCustomResourceProcider = new cr.Provider(
+    const weatherCustomResourceProvider = new cr.Provider(
       this,
       "weatherCustomResourceProvider",
       {
@@ -44,7 +45,7 @@ export class AwsPortalStack extends Stack {
     );
 
     new CustomResource(this, "weatherCustomResource", {
-      serviceToken: weatherCustomResourceProcider.serviceToken,
+      serviceToken: weatherCustomResourceProvider.serviceToken,
     });
   }
 }

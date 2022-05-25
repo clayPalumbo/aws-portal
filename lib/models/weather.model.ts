@@ -7,3 +7,9 @@ export interface WeatherResponse {
   icon: string;
   forecast: any;
 }
+
+export interface Forecast {
+  nextFewHours: any;
+  high: string;
+  low: string;
+}
