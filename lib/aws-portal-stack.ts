@@ -1,8 +1,15 @@
 import * as logs from "@aws-cdk/aws-logs";
-import { CustomResource, Stack, StackProps, Construct } from "@aws-cdk/core";
+import {
+  CustomResource,
+  Stack,
+  StackProps,
+  Construct,
+  CfnOutput,
+} from "@aws-cdk/core";
 import "dotenv/config";
 import * as cr from "@aws-cdk/custom-resources";
 import * as lambda from "@aws-cdk/aws-lambda";
+import * as apigateway from "@aws-cdk/aws-apigateway";
 import * as iam from "@aws-cdk/aws-iam";
 import * as path from "path";
 
@@ -11,41 +18,117 @@ export class AwsPortalStack extends Stack {
     super(scope, id, props);
 
     const WEATHER_KEY = process.env.WEATHER_KEY;
-    const weatherResourceRole = new iam.Role(
-      this,
-      "weatherCustomResourceRole",
-      {
-        assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      }
-    );
+    const STOCK_KEY = process.env.STOCK_KEY;
 
-    weatherResourceRole.addToPolicy(
-      new iam.PolicyStatement({
-        resources: ["arn:aws:weather:*"],
-        actions: ["weather:CreateCollections"],
-      })
-    );
+    const api = this.apiGatewayFactory();
 
-    const onEvent = new lambda.Function(this, "weather", {
-      runtime: lambda.Runtime.NODEJS_14_X,
-      handler: "weather-resource.handler",
-      code: lambda.Code.fromAsset(path.resolve("js/lib/functions")),
-      environment: {
-        WEATHER_KEY: WEATHER_KEY as string,
-      },
+    new CfnOutput(this, "apiUrl", { value: api.url });
+
+    // Define layers here:
+    const nodeFetchLayer = new lambda.LayerVersion(this, "node-fetch-layer", {
+      compatibleRuntimes: [
+        lambda.Runtime.NODEJS_12_X,
+        lambda.Runtime.NODEJS_14_X,
+      ],
+      code: lambda.Code.fromAsset("lambda-layers/node-fetch"),
+      description: "Uses a 3rd party library called node-fetch",
     });
 
-    const weatherCustomResourceProvider = new cr.Provider(
-      this,
-      "weatherCustomResourceProvider",
-      {
-        onEventHandler: onEvent,
-        logRetention: logs.RetentionDays.ONE_DAY,
-      }
+    // Lambda creation here:
+    const weatherLambda = this.createLambdaShell(
+      "weather",
+      WEATHER_KEY as string,
+      "WEATHER_KEY",
+      [nodeFetchLayer]
+    );
+    const stockLambda = this.createLambdaShell(
+      "stock",
+      STOCK_KEY as string,
+      "STOCK_KEY",
+      [nodeFetchLayer]
+    );
+    // endpoints defined here:
+    const weatherApiResource = api.root.addResource("weather");
+    const stockApiResource = api.root.addResource("stock");
+
+    // attach lambdas to endpoints here:
+    weatherApiResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(weatherLambda.lambda, { proxy: true })
+    );
+    stockApiResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(stockLambda.lambda, { proxy: true })
     );
 
+    // define custom resources here:
     new CustomResource(this, "weatherCustomResource", {
-      serviceToken: weatherCustomResourceProvider.serviceToken,
+      serviceToken: weatherLambda.crp.serviceToken,
+    });
+    new CustomResource(this, "stockCustomResource", {
+      serviceToken: stockLambda.crp.serviceToken,
     });
   }
+
+  /**
+   * Creates a lambda shell deployable by Cloudformation.
+   * @param name lambda name.
+   * @param envVar currently a string but considering turning it into a array for multiple.
+   * @returns a custom resource provider and lambda
+   */
+  private createLambdaShell = (
+    name: string,
+    envVar: string,
+    key: string,
+    layers?: lambda.LayerVersion[]
+  ): { crp: cr.Provider; lambda: lambda.Function } => {
+    const customResourceRole = new iam.Role(this, `${name}CustomResourceRole`, {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    customResourceRole.addToPolicy(
+      new iam.PolicyStatement({
+        resources: [`arn:aws:${name}:*`],
+        actions: [`${name}:CreateCollections`],
+      })
+    );
+    // TODO: Restructure folder structure for lambdas
+    const onEvent = new lambda.Function(this, name, {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      handler: `${name}-resource.handler`,
+      code: lambda.Code.fromAsset(path.resolve("js/lib/functions")),
+      environment: {
+        [key]: envVar,
+      },
+      layers: layers,
+    });
+
+    return {
+      crp: new cr.Provider(this, `${name}CustomResourceProvider`, {
+        onEventHandler: onEvent,
+        logRetention: logs.RetentionDays.ONE_DAY,
+      }),
+      lambda: onEvent,
+    };
+  };
+
+  private apiGatewayFactory = (): apigateway.RestApi => {
+    return new apigateway.RestApi(this, "dashboard", {
+      description: "Dashboard BE",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: [
+          "Content-Type",
+          "X-Amz-Date",
+          "Authorization",
+          "X-Api-Key",
+        ],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["http://localhost:3000", "http://localhost:3001"],
+      },
+    });
+  };
 }

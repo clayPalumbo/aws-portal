@@ -11,7 +11,7 @@ export class WeatherService {
   public getWeather = async (): Promise<WeatherResponse> => {
     try {
       const response = await fetch(
-        `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_KEY}&q=${this.event}&days=1&aqi=no&alerts=no`
+        `http://api.weatherapi.com/v1/forecast.json?key=${process.env.WEATHER_KEY}&q=${this.event.queryStringParameters.location}&days=1&aqi=no&alerts=no`
       );
       const data = await response.json();
       return this.weatherMapper(data);
@@ -23,7 +23,7 @@ export class WeatherService {
   private weatherMapper = (weather: any): WeatherResponse => {
     const current = weather.current;
     const icon = current?.condition.icon.slice(2);
-    const localTime = new Date(weather.localtime).getHours();
+    const localTime = new Date(weather.location.localtime).getHours();
     const refinedForecast = this.getRefinedForecast(
       weather.forecast.forecastday[0],
       localTime
@@ -32,10 +32,10 @@ export class WeatherService {
       condition: current.condition.text,
       location: weather.location.name,
       feelsLike: current.feelslike_f,
-      forecast: refinedForecast,
       wind: current.wind_mph,
       temp: current.temp_f,
       icon: icon,
+      forecast: refinedForecast,
     };
   };
 

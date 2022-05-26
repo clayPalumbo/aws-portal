@@ -5,7 +5,7 @@ import * as cdk from "@aws-cdk/core";
 import { AwsPortalStack } from "../lib/aws-portal-stack";
 
 const app = new cdk.App();
-new AwsPortalStack(app, "dev", {
+new AwsPortalStack(app, "dev-clay-dashboard", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
