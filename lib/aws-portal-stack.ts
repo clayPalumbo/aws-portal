@@ -18,7 +18,7 @@ export class AwsPortalStack extends Stack {
     super(scope, id, props);
 
     const WEATHER_KEY = process.env.WEATHER_KEY;
-    const STOCK_KEY = process.env.STOCK_KEY;
+    const RAPID_API_KEY = process.env.RAPID_API_KEY;
 
     const api = this.apiGatewayFactory();
 
@@ -43,13 +43,20 @@ export class AwsPortalStack extends Stack {
     );
     const stockLambda = this.createLambdaShell(
       "stock",
-      STOCK_KEY as string,
+      RAPID_API_KEY as string,
       "STOCK_KEY",
+      [nodeFetchLayer]
+    );
+    const cryptoNewsLambda = this.createLambdaShell(
+      "crypto-news",
+      RAPID_API_KEY as string,
+      "CRYPTO_NEWS_KEY",
       [nodeFetchLayer]
     );
     // endpoints defined here:
     const weatherApiResource = api.root.addResource("weather");
     const stockApiResource = api.root.addResource("stock");
+    const cryptoNewsApiResource = stockApiResource.addResource("crypto-news");
 
     // attach lambdas to endpoints here:
     weatherApiResource.addMethod(
@@ -60,6 +67,10 @@ export class AwsPortalStack extends Stack {
       "GET",
       new apigateway.LambdaIntegration(stockLambda.lambda, { proxy: true })
     );
+    cryptoNewsApiResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(cryptoNewsLambda.lambda, { proxy: true })
+    );
 
     // define custom resources here:
     new CustomResource(this, "weatherCustomResource", {
@@ -67,6 +78,9 @@ export class AwsPortalStack extends Stack {
     });
     new CustomResource(this, "stockCustomResource", {
       serviceToken: stockLambda.crp.serviceToken,
+    });
+    new CustomResource(this, "cryptoNewsCustomResource", {
+      serviceToken: cryptoNewsLambda.crp.serviceToken,
     });
   }
 
