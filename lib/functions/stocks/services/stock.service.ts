@@ -20,15 +20,14 @@ export class StockService {
   // TODO: implement 429 for exceeding api limit
   // TODO: add separate api for stocks to allow more calls a day
   // TODO: break out into two functions for cryto/stocks
-  public getStocks = async () => {
+  public getEquities = async () => {
     try {
       const response = await fetch(
-        `https://alpha-vantage.p.rapidapi.com/query?from_currency=${this.fromCurrency}&function=${this.stockData}&to_currency=${this.toCurrency}`,
+        `https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/trending/latest`,
         {
           method: "GET",
           headers: {
-            "X-RapidAPI-Host": "alpha-vantage.p.rapidapi.com",
-            "X-RapidAPI-Key": process.env.STOCK_KEY as string,
+            "X-CMC_PRO_API_KEY": "27a2c8c5-ce02-44ba-868d-cf2c71b658fb",
           },
         }
       );

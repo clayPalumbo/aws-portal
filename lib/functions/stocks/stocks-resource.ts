@@ -4,7 +4,7 @@ export const handler = async (event: any): Promise<any> => {
   console.log("Stock lambda", event);
   const stockService = new StockService(event);
   try {
-    const body = await stockService.getStocks();
+    const body = await stockService.getEquities();
     return {
       isBase64Encoded: false,
       statusCode: 200,

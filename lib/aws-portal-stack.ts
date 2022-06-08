@@ -42,21 +42,21 @@ export class AwsPortalStack extends Stack {
       [nodeFetchLayer]
     );
     const stockLambda = this.createLambdaShell(
-      "stock",
+      "stocks",
       RAPID_API_KEY as string,
-      "STOCK_KEY",
+      "RAPID_API_KEY",
       [nodeFetchLayer]
     );
     const cryptoNewsLambda = this.createLambdaShell(
       "crypto-news",
       RAPID_API_KEY as string,
-      "CRYPTO_NEWS_KEY",
+      "RAPID_API_KEY",
       [nodeFetchLayer]
     );
     // endpoints defined here:
     const weatherApiResource = api.root.addResource("weather");
-    const stockApiResource = api.root.addResource("stock");
-    const cryptoNewsApiResource = stockApiResource.addResource("crypto-news");
+    const stockApiResource = api.root.addResource("stocks");
+    const cryptoNewsApiResource = api.root.addResource("crypto-news");
 
     // attach lambdas to endpoints here:
     weatherApiResource.addMethod(
@@ -110,7 +110,7 @@ export class AwsPortalStack extends Stack {
     const onEvent = new lambda.Function(this, name, {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: `${name}-resource.handler`,
-      code: lambda.Code.fromAsset(path.resolve("js/lib/functions")),
+      code: lambda.Code.fromAsset(path.resolve(`js/lib/functions/${name}`)),
       environment: {
         [key]: envVar,
       },
@@ -141,7 +141,7 @@ export class AwsPortalStack extends Stack {
         ],
         allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
         allowCredentials: true,
-        allowOrigins: ["http://localhost:3000", "http://localhost:3001"],
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
       },
     });
   };

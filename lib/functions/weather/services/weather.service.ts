@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { Forecast, WeatherResponse } from "../../models/weather.model";
+import { Forecast, WeatherResponse } from "../../../models/weather.model";
 
 export class WeatherService {
   event: any;
@@ -22,7 +22,7 @@ export class WeatherService {
 
   private weatherMapper = (weather: any): WeatherResponse => {
     const current = weather.current;
-    const icon = current?.condition.icon.slice(2);
+    const icon = current?.condition.code;
     const localTime = new Date(weather.location.localtime).getHours();
     const refinedForecast = this.getRefinedForecast(
       weather.forecast.forecastday[0],
@@ -33,8 +33,10 @@ export class WeatherService {
       location: weather.location.name,
       feelsLike: current.feelslike_f,
       wind: current.wind_mph,
+      windDirection: current.wind_dir,
       temp: current.temp_f,
       icon: icon,
+      uv: current.uv,
       forecast: refinedForecast,
     };
   };
@@ -45,10 +47,11 @@ export class WeatherService {
 
     const refinedForecast = closeHours.map((hour: any) => {
       return {
-        condition: hour.condition.icon.slice(2),
+        condition: hour.condition.code,
         chanceOfRain: hour.chance_of_rain,
         temp: hour.temp_f,
         wind: hour.wind,
+        time: hour.time_epoch,
       };
     });
 
