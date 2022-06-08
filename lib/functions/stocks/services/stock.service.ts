@@ -26,9 +26,6 @@ export class StockService {
         `https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/trending/latest`,
         {
           method: "GET",
-          headers: {
-            "X-CMC_PRO_API_KEY": "27a2c8c5-ce02-44ba-868d-cf2c71b658fb",
-          },
         }
       );
       const data = await response.json();
