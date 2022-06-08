@@ -9,6 +9,10 @@ export const handler = async (event: any) => {
       isBase64Encoded: false,
       statusCode: 200,
       body: JSON.stringify(body),
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+        "Access-Control-Allow-Credentials": true, // Required for cookies, authorization headers with HTTPS
+      },
     };
   } catch (error) {
     throw new Error("Crypto news failed: " + error);
