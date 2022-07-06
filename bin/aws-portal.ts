@@ -1,11 +1,20 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "@aws-cdk/core";
+require("dotenv").config();
 
 import { AwsPortalStack } from "../lib/aws-portal-stack";
 
+const config = {
+  env: {
+    account: process.env.AWS_ACCOUNT_NUMBER,
+    region: process.env.AWS_REGION,
+  },
+};
+
 const app = new cdk.App();
 new AwsPortalStack(app, "dev-clay-dashboard", {
+  env: config.env,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

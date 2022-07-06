@@ -1,4 +1,5 @@
 # Welcome to my overly engineered Dashboard BE (in progress)
+Deployed using AWS Cloudformation with a combination of AWS Lambda and API Gateway.
 
 In progress.
 
